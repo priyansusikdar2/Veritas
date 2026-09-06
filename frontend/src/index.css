@@ -1,0 +1,296 @@
+:root {
+  --bg-primary: #060813;
+  --bg-secondary: #0b101e;
+  --bg-surface: #0f172a;
+  --bg-elevated: #151f36;
+  --bg-glass: rgba(15, 23, 42, 0.78);
+  --bg-glass-heavy: rgba(11, 16, 30, 0.92);
+  
+  --border-subtle: rgba(148, 163, 184, 0.12);
+  --border-medium: rgba(148, 163, 184, 0.22);
+  --border-highlight: rgba(56, 189, 248, 0.4);
+  --border-glow: rgba(0, 242, 254, 0.5);
+  
+  --cyan-neon: #00f2fe;
+  --cyan-primary: #38bdf8;
+  --cyan-glow: rgba(0, 242, 254, 0.25);
+  --cyan-bg: rgba(56, 189, 248, 0.1);
+  
+  --indigo-neon: #6366f1;
+  --indigo-primary: #818cf8;
+  --indigo-glow: rgba(99, 102, 241, 0.25);
+  
+  --violet-neon: #a855f7;
+  --violet-primary: #c084fc;
+  --violet-glow: rgba(168, 85, 247, 0.25);
+  
+  --emerald-success: #10b981;
+  --emerald-bg: rgba(16, 185, 129, 0.12);
+  --emerald-border: rgba(16, 185, 129, 0.35);
+  --emerald-glow: rgba(16, 185, 129, 0.25);
+  
+  --amber-warning: #f59e0b;
+  --amber-bg: rgba(245, 158, 11, 0.12);
+  --amber-border: rgba(245, 158, 11, 0.35);
+  
+  --rose-danger: #f43f5e;
+  --rose-bg: rgba(244, 63, 94, 0.14);
+  --rose-border: rgba(244, 63, 94, 0.35);
+  --rose-glow: rgba(244, 63, 94, 0.25);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+  
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+  selection-background-color: var(--cyan-neon);
+  selection-color: #060813;
+}
+
+/* Background Cyber Grid & Radiant Mesh */
+.cyber-bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 0% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 45%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+}
+
+.glass-panel-glow {
+  border-color: var(--border-highlight);
+  box-shadow: 0 0 25px -5px var(--cyan-glow);
+}
+
+.glass-card-interactive {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-interactive:hover {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -8px rgba(0, 242, 254, 0.15);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan-primary);
+}
+
+/* Status Indicators & Beacons */
+.live-beacon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--emerald-success);
+  box-shadow: 0 0 8px var(--emerald-success);
+  position: relative;
+  display: inline-block;
+}
+
+.live-beacon::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  border: 1.5px solid var(--emerald-success);
+  animation: beacon-ripple 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+@keyframes beacon-ripple {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Pulse & Shimmer Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.25), inset 0 0 10px rgba(0, 242, 254, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 242, 254, 0.5), inset 0 0 16px rgba(0, 242, 254, 0.2);
+  }
+}
+
+.pulsing-border {
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+/* Badges & Pills */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-verified {
+  background: var(--emerald-bg);
+  color: var(--emerald-success);
+  border: 1px solid var(--emerald-border);
+}
+
+.badge-warning {
+  background: var(--amber-bg);
+  color: var(--amber-warning);
+  border: 1px solid var(--amber-border);
+}
+
+.badge-debunked {
+  background: var(--rose-bg);
+  color: var(--rose-danger);
+  border: 1px solid var(--rose-border);
+}
+
+.badge-cyan {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--cyan-primary);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.badge-violet {
+  background: rgba(168, 85, 247, 0.12);
+  color: var(--violet-neon);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.badge-indigo {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--indigo-primary);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* React Flow styling overrides */
+.react-flow {
+  background: #090d16 !important;
+}
+.react-flow__attribution {
+  display: none !important;
+}
+.react-flow__controls {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  fill: var(--text-secondary) !important;
+}
+.react-flow__controls-button:hover {
+  background: var(--bg-secondary) !important;
+  fill: var(--cyan-neon) !important;
+}
+.react-flow__edge-path {
+  stroke: rgba(56, 189, 248, 0.45) !important;
+  stroke-width: 2px !important;
+}
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke: var(--cyan-neon) !important;
+  stroke-dasharray: 6;
+  animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Print / Executive Forensic PDF Export Styles */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+  }
+  aside,
+  header,
+  nav,
+  button,
+  input,
+  .no-print {
+    display: none !important;
+  }
+  main,
+  #root,
+  .app-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+  * {
+    color: #0f172a !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background-color: transparent !important;
+  }
+}

@@ -2,15 +2,21 @@
 
 <div align="center">
 
+[![Live Demo](https://img.shields.io/badge/Live%20Platform-veritas--1--cswk.onrender.com-00f2fe?style=for-the-badge&logo=render&logoColor=black)](https://veritas-1-cswk.onrender.com/)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/Orchestrator-LangGraph%20Multi--Agent-FF6F00?style=for-the-badge)](https://langchain-ai.github.io/langgraph/)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20%7C%20TypeScript%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://vitejs.dev)
-[![Render](https://img.shields.io/badge/Deploy%20to-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](DEPLOYMENT_RENDER.md)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **An autonomous multi-agent intelligence platform that verifies preprints, calculates Bayesian truth confidence, audits statistical p-hacking hazards, traces empirical web evidence, and cross-examines research papers in real time.**
 
-[Key Features](#-key-features) • [Architecture](#-multi-agent-architecture) • [Quickstart](#-quickstart) • [Deploy on Render](DEPLOYMENT_RENDER.md) • [Live Demos](#-benchmark-showcase) • [API Reference](#-api-reference)
+<br />
+
+### 🌐 [Click Here to Launch Live App on Render (https://veritas-1-cswk.onrender.com/)](https://veritas-1-cswk.onrender.com/)
+
+<br />
+
+[Live Demo](https://veritas-1-cswk.onrender.com/) • [Key Features](#-key-features) • [Architecture](#-multi-agent-architecture) • [Quickstart](#-quickstart) • [Deploy on Render](DEPLOYMENT_RENDER.md) • [Live Demos](#-benchmark-showcase) • [API Reference](#-api-reference)
 
 </div>
 
@@ -88,7 +94,17 @@ flowchart TD
 
 ---
 
-## 🛠️ Quickstart
+## 🌐 Live Production Deployment
+
+Veritas is deployed and accessible on Render:
+
+- **Live Application**: [https://veritas-1-cswk.onrender.com/](https://veritas-1-cswk.onrender.com/)
+- **API Health Endpoint**: [https://veritas-1-cswk.onrender.com/api/health](https://veritas-1-cswk.onrender.com/api/health)
+- **Presets Endpoint**: [https://veritas-1-cswk.onrender.com/api/presets](https://veritas-1-cswk.onrender.com/api/presets)
+
+---
+
+## 🛠️ Quickstart (Local Development)
 
 ### Prerequisites
 - **Python**: 3.11+
@@ -128,7 +144,7 @@ The interface will be live at `http://127.0.0.1:5173`.
 
 ---
 
-## ☁️ Deploy on Render in 60 Seconds
+## ☁️ Deploy Your Own on Render in 60 Seconds
 
 Veritas includes a pre-configured [`render.yaml`](render.yaml) blueprint for 1-click cloud deployment:
 

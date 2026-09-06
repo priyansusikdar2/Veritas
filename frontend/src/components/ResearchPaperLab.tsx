@@ -17,6 +17,7 @@ import {
   Send
 } from 'lucide-react';
 import type { ResearchUploadedFile } from '../types';
+import { API_BASE } from '../config';
 
 export const BENCHMARK_PAPERS: ResearchUploadedFile[] = [
   {
@@ -371,7 +372,7 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
     formData.append('file', file);
 
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/upload', {
+      const resp = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData
       });
@@ -399,7 +400,7 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
     setIsResolvingArxiv(true);
     setResolveError(null);
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/resolve-paper', {
+      const resp = await fetch(`${API_BASE}/api/resolve-paper`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url_or_id: urlOrId.trim() })
@@ -438,7 +439,7 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
     setIsInterrogating(true);
 
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/interrogate-paper', {
+      const resp = await fetch(`${API_BASE}/api/interrogate-paper`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

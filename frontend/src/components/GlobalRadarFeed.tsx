@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Radar, Flame, Filter, Send, UploadCloud, FileText, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import type { ResearchUploadedFile } from '../types';
+import { API_BASE } from '../config';
 
 export interface TrendingClaim {
   id: string;
@@ -130,7 +131,7 @@ export const GlobalRadarFeed: React.FC<GlobalRadarFeedProps> = ({
     formData.append('file', file);
 
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/upload', {
+      const resp = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData
       });

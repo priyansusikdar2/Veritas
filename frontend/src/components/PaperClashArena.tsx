@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { ResearchUploadedFile, PaperClashItem, ClashPaperProfile } from '../types';
 import { BENCHMARK_PAPERS } from './ResearchPaperLab';
+import { API_BASE } from '../config';
 
 // Extended catalog of benchmark papers formatted as Clash Profiles
 const BENCHMARK_CLASH_PROFILES: Record<string, ClashPaperProfile> = {
@@ -356,7 +357,7 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
     formData.append('file', file);
 
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/upload', {
+      const resp = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData
       });

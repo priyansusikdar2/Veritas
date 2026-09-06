@@ -28,6 +28,7 @@ import {
   Loader2
 } from 'lucide-react';
 import type { DossierReport } from '../types';
+import { API_BASE } from '../config';
 import { DebateArenaView } from './DebateArenaView';
 import { BiasRadarView } from './BiasRadarView';
 import { CitationIntegrityView } from './CitationIntegrityView';
@@ -224,7 +225,7 @@ export const DossierView: React.FC<DossierViewProps> = ({ dossier }) => {
         key_assertions: dossier.claims_breakdown.map(c => c.claim_text)
       };
 
-      const resp = await fetch('http://127.0.0.1:8000/api/interrogate-paper', {
+      const resp = await fetch(`${API_BASE}/api/interrogate-paper`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

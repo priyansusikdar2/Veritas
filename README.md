@@ -5,11 +5,12 @@
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.11-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/Orchestrator-LangGraph%20Multi--Agent-FF6F00?style=for-the-badge)](https://langchain-ai.github.io/langgraph/)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20%7C%20TypeScript%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://vitejs.dev)
+[![Render](https://img.shields.io/badge/Deploy%20to-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](DEPLOYMENT_RENDER.md)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 **An autonomous multi-agent intelligence platform that verifies preprints, calculates Bayesian truth confidence, audits statistical p-hacking hazards, traces empirical web evidence, and cross-examines research papers in real time.**
 
-[Key Features](#-key-features) • [Architecture](#-multi-agent-architecture) • [Quickstart](#-quickstart) • [Live Demos](#-benchmark-showcase) • [API Reference](#-api-reference)
+[Key Features](#-key-features) • [Architecture](#-multi-agent-architecture) • [Quickstart](#-quickstart) • [Deploy on Render](DEPLOYMENT_RENDER.md) • [Live Demos](#-benchmark-showcase) • [API Reference](#-api-reference)
 
 </div>
 
@@ -124,6 +125,19 @@ npm run dev
 The interface will be live at `http://127.0.0.1:5173`.
 
 > **Note on API Keys**: Veritas is fully autonomous out-of-the-box! It includes built-in web search scraping (DuckDuckGo `ddgs`) and local heuristic extraction. You can optionally add Google Gemini, OpenAI, Groq, or Tavily keys in the Settings modal for multi-LLM synthesis.
+
+---
+
+## ☁️ Deploy on Render in 60 Seconds
+
+Veritas includes a pre-configured [`render.yaml`](render.yaml) blueprint for 1-click cloud deployment:
+
+1. Push your repository to GitHub.
+2. In the [Render Dashboard](https://dashboard.render.com), click **New +** $\rightarrow$ **Blueprint**.
+3. Connect your repository and click **Apply**.
+4. Render automatically builds the React SPA, installs the Python FastAPI backend, and provisions your live URL.
+
+For manual dashboard setup and free-tier tips, see the complete [Render Deployment Guide](DEPLOYMENT_RENDER.md).
 
 ---
 

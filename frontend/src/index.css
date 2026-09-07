@@ -264,33 +264,116 @@ body {
   to { stroke-dashoffset: 0; }
 }
 
+/* Screen & Print Mode Utilities */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
 /* Print / Executive Forensic PDF Export Styles */
 @media print {
-  body {
+  @page {
+    margin: 12mm 10mm;
+    size: A4 portrait;
+  }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box !important;
+  }
+
+  html, body {
     background: #ffffff !important;
     color: #0f172a !important;
-    font-size: 11pt !important;
+    font-size: 10pt !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-font-smoothing: antialiased;
   }
+
   aside,
   header,
   nav,
   button,
   input,
-  .no-print {
+  .no-print,
+  .screen-only {
     display: none !important;
   }
+
+  .print-only {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  }
+
   main,
   #root,
-  .app-container {
+  .app-container,
+  .dossier-root-container {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
     background: #ffffff !important;
-  }
-  * {
-    color: #0f172a !important;
+    overflow: visible !important;
+    display: block !important;
+    border: none !important;
     box-shadow: none !important;
-    text-shadow: none !important;
-    background-color: transparent !important;
+  }
+
+  /* Multi-page document sections must break naturally across pages */
+  .print-section {
+    display: block !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-bottom: 22px !important;
+    width: 100% !important;
+    clear: both !important;
+  }
+
+  /* Atomic individual cards stay intact on their respective page */
+  .print-card,
+  .print-avoid-break {
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 12px !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Prevent headings from being orphaned at the bottom of a page */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    color: #0f172a !important;
+    line-height: 1.3 !important;
+  }
+
+  p, div, li, span {
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Ensure images, SVGs, charts, and badges are never cut or clipped */
+  img, svg, canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

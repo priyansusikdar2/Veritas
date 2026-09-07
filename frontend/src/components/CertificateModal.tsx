@@ -16,7 +16,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ certificate,
   };
 
   return (
-    <div style={{
+    <div className="no-print" style={{
       position: 'fixed',
       top: 0,
       left: 0,

@@ -588,16 +588,18 @@ export function App() {
             ) : (
               <>
                 {/* Real-time ML Inference & Telemetry Drawer */}
-                <MLTelemetryDrawer
-                  isLoading={isLoading}
-                  truthScore={truthScore}
-                  sourcesCount={sources.length}
-                  apiKeys={apiKeys}
-                  dossier={dossier}
-                />
+                <div className="no-print">
+                  <MLTelemetryDrawer
+                    isLoading={isLoading}
+                    truthScore={truthScore}
+                    sourcesCount={sources.length}
+                    apiKeys={apiKeys}
+                    dossier={dossier}
+                  />
+                </div>
 
                 {/* Layout Mode Selector Toolbar */}
-                <div style={{
+                <div className="no-print" style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -674,7 +676,7 @@ export function App() {
                 </div>
 
                 {/* Graph + Terminal Split View with Large Sizing */}
-                <div style={{
+                <div className="no-print" style={{
                   display: 'grid',
                   gridTemplateColumns: viewMode === 'expanded-graph' 
                     ? 'minmax(0, 3.2fr) minmax(320px, 1.1fr)' 
@@ -712,7 +714,7 @@ export function App() {
                 {/* Investigative Dossier Section */}
                 {dossier && (
                   <div style={{ marginTop: '32px', width: '100%', position: 'relative', clear: 'both' }}>
-                    <DossierView dossier={dossier} apiKeys={apiKeys} />
+                    <DossierView dossier={dossier} apiKeys={apiKeys} nodes={nodes} edges={edges} />
                   </div>
                 )}
               </>

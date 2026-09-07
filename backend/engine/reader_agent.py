@@ -124,7 +124,12 @@ class ReaderAgent:
         docs = []
         seen_urls = set()
         # Domains to filter out for research investigations
-        BLOCKED_RESEARCH_DOMAINS = ["facebook.com", "instagram.com", "tiktok.com", "4chan.org", "pinterest.com"]
+        BLOCKED_RESEARCH_DOMAINS = [
+            "facebook.com", "instagram.com", "tiktok.com", "4chan.org", "pinterest.com",
+            "merriam-webster.com", "dictionary.cambridge.org", "dictionary.com",
+            "wiktionary.org", "thefreedictionary.com", "vocabulary.com", "urbandictionary.com",
+            "collinsdictionary.com"
+        ]
 
         for item in raw_results:
             url = item.get("url")

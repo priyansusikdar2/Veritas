@@ -378,8 +378,15 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
       });
       const data = await resp.json();
       if (data.status === 'success' && data.file) {
-        onPaperChange(data.file);
-        setCustomQuery(data.file.suggested_query || data.file.title || file.name);
+        const fileData = data.file;
+        const lowerTitle = (fileData.title || '').toLowerCase();
+        const lowerAbstract = (fileData.abstract_summary || '').toLowerCase();
+        if (lowerTitle.includes('error reading') || lowerAbstract.includes('error reading') || lowerTitle.includes('no module named')) {
+          setUploadError(fileData.abstract_summary || 'Failed to extract readable text from the document. Please ensure it contains selectable text.');
+          return;
+        }
+        onPaperChange(fileData);
+        setCustomQuery(fileData.suggested_query || fileData.title || file.name);
         setInterrogationHistory([]);
         setTimeout(() => {
           formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });

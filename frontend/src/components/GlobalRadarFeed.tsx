@@ -138,6 +138,12 @@ export const GlobalRadarFeed: React.FC<GlobalRadarFeedProps> = ({
       const data = await resp.json();
       if (data.status === 'success' && data.file) {
         const parsedFile: ResearchUploadedFile = data.file;
+        const lowerTitle = (parsedFile.title || '').toLowerCase();
+        const lowerAbstract = (parsedFile.abstract_summary || '').toLowerCase();
+        if (lowerTitle.includes('error reading') || lowerAbstract.includes('error reading') || lowerTitle.includes('no module named')) {
+          setUploadError(parsedFile.abstract_summary || 'Failed to extract readable text from the document.');
+          return;
+        }
         setLatestUploadedFile(parsedFile);
         if (onUploadPaper) {
           onUploadPaper(parsedFile);

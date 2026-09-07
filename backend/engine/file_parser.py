@@ -258,49 +258,151 @@ class ResearchFileParser:
         }
 
     @staticmethod
+    def _extract_text_from_pdf(file_bytes: bytes, filename: str) -> tuple[str, int]:
+        """
+        Extracts text from PDF bytes using a multi-strategy approach:
+        1. pypdf (preferred, industry standard)
+        2. fitz / PyMuPDF (if available)
+        3. Built-in zlib text-stream extractor (pure Python fallback)
+        Raises ValueError if text cannot be extracted.
+        """
+        pages_text: List[str] = []
+        page_count = 1
+
+        # Strategy 1: pypdf
+        try:
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+            if reader.is_encrypted:
+                try:
+                    reader.decrypt("")
+                except Exception:
+                    pass
+            page_count = max(1, len(reader.pages))
+            # Scan up to first 25 pages to cover abstract, intro, methods, and evaluation
+            for p in reader.pages[:25]:
+                try:
+                    txt = p.extract_text()
+                    if txt and txt.strip():
+                        pages_text.append(txt.strip())
+                except Exception:
+                    continue
+        except Exception as e:
+            # Fall through to fallback strategies
+            pass
+
+        # Strategy 2: PyMuPDF (fitz) if installed in the environment
+        if not pages_text:
+            try:
+                import importlib
+                fitz = importlib.import_module("fitz")
+                doc = fitz.open(stream=file_bytes, filetype="pdf")
+                page_count = max(1, len(doc))
+                for page in doc[:25]:
+                    txt = page.get_text()
+                    if txt and txt.strip():
+                        pages_text.append(txt.strip())
+            except Exception:
+                pass
+
+        # Strategy 3: Pure Python stream decompression fallback
+        if not pages_text:
+            try:
+                import zlib
+                raw_streams = re.findall(rb"stream[\r\n]+(.*?)[\r\n]+endstream", file_bytes, re.DOTALL)
+                extracted_snippets = []
+                for s in raw_streams:
+                    decompressed = b""
+                    try:
+                        decompressed = zlib.decompress(s)
+                    except Exception:
+                        try:
+                            decompressed = zlib.decompress(s, -15)
+                        except Exception:
+                            decompressed = s
+
+                    # Extract text inside PDF parenthesis strings (Tj and TJ operators)
+                    matches = re.findall(rb"\((.*?)\)\s*Tj", decompressed)
+                    if matches:
+                        chunk = " ".join([m.decode("latin-1", errors="ignore") for m in matches if len(m) > 1])
+                        if len(chunk) > 20:
+                            extracted_snippets.append(chunk)
+
+                if extracted_snippets:
+                    pages_text = extracted_snippets
+            except Exception:
+                pass
+
+        full_extracted = "\n".join(pages_text).strip()
+        cleaned_check = re.sub(r'\s+', ' ', full_extracted).strip()
+
+        if len(cleaned_check) < 25:
+            raise ValueError(
+                f"Unable to extract readable text from PDF '{filename}'. "
+                f"The document may be password-protected, an image-only scan without an OCR text layer, or corrupted. "
+                f"Please upload a searchable text PDF or paste the text directly."
+            )
+
+        return full_extracted, page_count
+
+    @staticmethod
     def parse_file_bytes(file_bytes: bytes, filename: str) -> Dict[str, Any]:
         fname = filename.lower()
         extracted_text = ""
         page_count = 1
 
+        if not file_bytes:
+            raise ValueError(f"Uploaded file '{filename}' is empty.")
+
         if fname.endswith(".pdf"):
-            try:
-                import pypdf
-                reader = pypdf.PdfReader(io.BytesIO(file_bytes))
-                page_count = len(reader.pages)
-                pages_text = []
-                for p in reader.pages[:12]:  # Read first 12 pages for full introduction and methodology
-                    t = p.extract_text()
-                    if t:
-                        pages_text.append(t)
-                extracted_text = "\n".join(pages_text)
-            except Exception as e:
-                extracted_text = f"Error reading PDF: {e}"
+            extracted_text, page_count = ResearchFileParser._extract_text_from_pdf(file_bytes, filename)
         else:
             try:
-                extracted_text = file_bytes.decode("utf-8", errors="replace")
-            except Exception:
-                extracted_text = str(file_bytes[:3000])
+                extracted_text = file_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    extracted_text = file_bytes.decode("latin-1", errors="replace")
+                except Exception:
+                    extracted_text = file_bytes.decode("utf-8", errors="replace")
 
         cleaned = re.sub(r'\s+', ' ', extracted_text).strip()
+        if len(cleaned) < 25:
+            raise ValueError(
+                f"The uploaded document '{filename}' contains insufficient readable text (fewer than 25 characters). "
+                f"Please upload a manuscript containing text."
+            )
+
         lines = [l.strip() for l in extracted_text.split("\n") if len(l.strip()) > 15]
 
-        # Extract paper title
+        # Extract paper title safely
         paper_title = ""
-        for line in lines[:5]:
-            if len(line) > 15 and not any(k in line.lower() for k in ["arxiv", "doi:", "issn", "http", "vol."]):
-                paper_title = line[:120]
+        for line in lines[:8]:
+            line_clean = line.strip()
+            line_lower = line_clean.lower()
+            if (
+                len(line_clean) > 15
+                and not line_lower.startswith("error")
+                and not any(k in line_lower for k in ["arxiv", "doi:", "issn", "http", "vol.", "page ", "ieee", "springer", "elsevier"])
+            ):
+                paper_title = line_clean[:120]
                 break
+
         if not paper_title:
-            paper_title = filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ")
+            paper_title = filename.rsplit(".", 1)[0].replace("-", " ").replace("_", " ").strip()
 
         # Extract abstract or executive summary
         abstract_summary = ""
-        abstract_match = re.search(r'(?:abstract|summary|overview)[:\s]+(.*?)(?:(?:1\.?\s*introduction)|(?:keywords)|(?:index terms)|(?:methods)|\.\s+[A-Z])', cleaned, re.IGNORECASE)
+        abstract_match = re.search(
+            r'(?:abstract|summary|overview)[:\s]+(.*?)(?:(?:1\.?\s*introduction)|(?:keywords)|(?:index terms)|(?:methods)|\.\s+[A-Z])',
+            cleaned,
+            re.IGNORECASE
+        )
         if abstract_match:
             abstract_summary = abstract_match.group(1).strip()[:1000]
         elif len(cleaned) > 100:
             abstract_summary = cleaned[:800]
+        else:
+            abstract_summary = cleaned
 
         # Extract key assertions / claims from the paper
         assertion_patterns = [
@@ -312,7 +414,7 @@ class ResearchFileParser:
             matches = re.findall(pat, cleaned, re.IGNORECASE)
             for m in matches:
                 clean_m = m.strip()
-                if 40 < len(clean_m) < 220 and clean_m not in key_assertions:
+                if 40 < len(clean_m) < 220 and clean_m not in key_assertions and not clean_m.lower().startswith("error"):
                     key_assertions.append(clean_m)
                 if len(key_assertions) >= 5:
                     break
@@ -320,18 +422,22 @@ class ResearchFileParser:
                 break
 
         if not key_assertions and lines:
-            key_assertions = [l for l in lines[1:6] if len(l) > 35][:4]
+            key_assertions = [l for l in lines[1:8] if len(l) > 35 and not l.lower().startswith("error")][:4]
 
         # Formulate suggested research query
         suggested_query = ""
         if abstract_match:
             candidate = abstract_match.group(1).strip()
-            sentences = [s.strip() for s in candidate.split(".") if len(s.strip()) > 20]
+            sentences = [s.strip() for s in candidate.split(".") if len(s.strip()) > 20 and not s.lower().startswith("error")]
             suggested_query = sentences[0][:140] if sentences else candidate[:140]
         elif key_assertions:
             suggested_query = key_assertions[0][:140]
         else:
             suggested_query = paper_title[:140]
+
+        # Safety check: Suggested query should never be an error message or empty
+        if not suggested_query or suggested_query.lower().startswith("error"):
+            suggested_query = f"{paper_title} empirical replication benchmark"
 
         word_count = len(cleaned.split())
         methodology = ResearchFileParser.analyze_methodology_rigor(cleaned, paper_title, key_assertions)

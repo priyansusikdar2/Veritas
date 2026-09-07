@@ -31,76 +31,143 @@ class VeritasLLMClient:
         # 1. Try Gemini
         gemini_key = self.api_keys.get("gemini")
         if gemini_key:
-            try:
-                # Try gemini-1.5-flash or gemini-2.0-flash
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-                payload = {
-                    "contents": [{
-                        "parts": [{"text": f"{system_prompt}\n\n{prompt}" if system_prompt else prompt}]
-                    }]
-                }
-                resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=12)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        return candidates[0]["content"]["parts"][0]["text"].strip()
-                else:
-                    print(f"[LLMClient] Gemini returned HTTP {resp.status_code}: {resp.text[:120]}")
-            except Exception as e:
-                print(f"[LLMClient] Gemini error: {e}")
+            gemini_models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+            for gm in gemini_models:
+                try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{gm}:generateContent?key={gemini_key}"
+                    payload = {
+                        "contents": [{
+                            "parts": [{"text": f"{system_prompt}\n\n{prompt}" if system_prompt else prompt}]
+                        }]
+                    }
+                    resp = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=12)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            return candidates[0]["content"]["parts"][0]["text"].strip()
+                    elif resp.status_code == 404:
+                        continue
+                    else:
+                        print(f"[LLMClient] Gemini ({gm}) returned HTTP {resp.status_code}: {resp.text[:120]}")
+                        break
+                except Exception as e:
+                    print(f"[LLMClient] Gemini error on {gm}: {e}")
 
         # 2. Try OpenAI
         openai_key = self.api_keys.get("openai")
         if openai_key:
-            try:
-                url = "https://api.openai.com/v1/chat/completions"
-                headers = {
-                    "Authorization": f"Bearer {openai_key}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "model": "gpt-4o-mini",
-                    "messages": [
-                        {"role": "system", "content": system_prompt or "You are an adversarial fact-checker and deep-researcher."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.2
-                }
-                resp = requests.post(url, json=payload, headers=headers, timeout=12)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    return data["choices"][0]["message"]["content"].strip()
-                else:
-                    print(f"[LLMClient] OpenAI returned HTTP {resp.status_code}: {resp.text[:120]}")
-            except Exception as e:
-                print(f"[LLMClient] OpenAI error: {e}")
+            openai_models = ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4o"]
+            for om in openai_models:
+                try:
+                    url = "https://api.openai.com/v1/chat/completions"
+                    headers = {
+                        "Authorization": f"Bearer {openai_key}",
+                        "Content-Type": "application/json"
+                    }
+                    payload = {
+                        "model": om,
+                        "messages": [
+                            {"role": "system", "content": system_prompt or "You are an adversarial fact-checker and deep-researcher."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.2
+                    }
+                    resp = requests.post(url, json=payload, headers=headers, timeout=12)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        return data["choices"][0]["message"]["content"].strip()
+                    elif resp.status_code == 404:
+                        continue
+                    else:
+                        print(f"[LLMClient] OpenAI ({om}) returned HTTP {resp.status_code}: {resp.text[:120]}")
+                        break
+                except Exception as e:
+                    print(f"[LLMClient] OpenAI error on {om}: {e}")
 
-        # 3. Try Groq
+        # 3. Try Groq (with dynamic model discovery and fallback for deprecated models)
         groq_key = self.api_keys.get("groq")
         if groq_key:
-            try:
-                url = "https://api.groq.com/openai/v1/chat/completions"
-                headers = {
-                    "Authorization": f"Bearer {groq_key}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [
-                        {"role": "system", "content": system_prompt or "You are an adversarial fact-checker and deep-researcher."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.2
-                }
-                resp = requests.post(url, json=payload, headers=headers, timeout=12)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    return data["choices"][0]["message"]["content"].strip()
-                else:
-                    print(f"[LLMClient] Groq returned HTTP {resp.status_code}: {resp.text[:120]}")
-            except Exception as e:
-                print(f"[LLMClient] Groq error: {e}")
+            # If active model hasn't been discovered yet, query Groq's models endpoint
+            if not getattr(self, "_groq_model_discovered", False):
+                try:
+                    m_resp = requests.get(
+                        "https://api.groq.com/openai/v1/models",
+                        headers={"Authorization": f"Bearer {groq_key}"},
+                        timeout=5
+                    )
+                    if m_resp.status_code == 200:
+                        m_data = m_resp.json().get("data", [])
+                        active_ids = [m.get("id") for m in m_data if m.get("id") and m.get("active", True)]
+                        # Preference order for best available text models on Groq
+                        preferred_order = [
+                            "llama-3.3-70b-versatile",
+                            "llama-3.1-70b-versatile",
+                            "llama-3.3-70b-specdec",
+                            "llama-3.1-8b-instant",
+                            "qwen-2.5-32b",
+                            "mixtral-8x7b-32768",
+                            "gemma2-9b-it"
+                        ]
+                        for pref in preferred_order:
+                            if pref in active_ids:
+                                self._active_groq_model = pref
+                                break
+                        # Fallback to any non-audio/non-guard model if preferred wasn't matched
+                        if not getattr(self, "_active_groq_model", None):
+                            for aid in active_ids:
+                                if not any(k in aid.lower() for k in ["whisper", "guard", "embed", "vision"]):
+                                    self._active_groq_model = aid
+                                    break
+                except Exception as me:
+                    pass
+                self._groq_model_discovered = True
+
+            groq_models = [
+                "llama-3.1-8b-instant",
+                "llama-3.3-70b-versatile",
+                "llama-3.3-70b-specdec",
+                "llama-3.1-70b-versatile",
+                "mixtral-8x7b-32768",
+                "gemma2-9b-it"
+            ]
+            cached = getattr(self, "_active_groq_model", None)
+            if cached:
+                groq_models = [cached] + [m for m in groq_models if m != cached]
+
+            for g_model in groq_models:
+                try:
+                    url = "https://api.groq.com/openai/v1/chat/completions"
+                    headers = {
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    }
+                    payload = {
+                        "model": g_model,
+                        "messages": [
+                            {"role": "system", "content": system_prompt or "You are an adversarial fact-checker and deep-researcher."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.2
+                    }
+                    resp = requests.post(url, json=payload, headers=headers, timeout=12)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        self._active_groq_model = g_model
+                        return data["choices"][0]["message"]["content"].strip()
+                    
+                    err_lower = resp.text.lower()
+                    # If model is decommissioned, deprecated, not found, or inaccessible, continue to next candidate
+                    if (
+                        resp.status_code in [400, 404]
+                        or any(k in err_lower for k in ["decommissioned", "model_not_found", "does not exist", "not have access", "deprecated", "retired"])
+                    ):
+                        continue
+                    else:
+                        print(f"[LLMClient] Groq ({g_model}) returned HTTP {resp.status_code}: {resp.text[:120]}")
+                        break
+                except Exception as e:
+                    print(f"[LLMClient] Groq error on {g_model}: {e}")
 
         return None
 

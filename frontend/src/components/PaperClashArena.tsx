@@ -364,6 +364,12 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
       const data = await resp.json();
       if (data.status === 'success' && data.file) {
         const uploadedFile: ResearchUploadedFile = data.file;
+        const lowerTitle = (uploadedFile.title || '').toLowerCase();
+        const lowerAbstract = (uploadedFile.abstract_summary || '').toLowerCase();
+        if (lowerTitle.includes('error reading') || lowerAbstract.includes('error reading') || lowerTitle.includes('no module named')) {
+          setUploadError(uploadedFile.abstract_summary || 'Failed to extract readable text from the document. Please ensure it contains selectable text.');
+          return;
+        }
         const profile = convertUploadedToProfile(uploadedFile);
         if (targetSide === 'A') {
           setPaperA(profile);

@@ -318,16 +318,30 @@ class CrossExaminerAgent:
             s_text = f"{s_title} {s_snippet}".lower()
 
             # Clean up webpage title
-            cleaned_title = re.sub(r"\s*[-|–]\s*(Wikipedia|Reuters|BBC|CNN|Nature|Science|The Guardian|YouTube|Reddit|AP News|Forbes).*$", "", s_title, flags=re.IGNORECASE).strip()
-            if len(cleaned_title) < 10 or cleaned_title.lower().startswith("wikipedia:"):
+            cleaned_title = re.sub(
+                r"\s*[-|–]\s*(Merriam-Webster|Cambridge Dictionary|Dictionary\.com|Wiktionary|Wikipedia|Reuters|BBC|CNN|Nature|Science|The Guardian|YouTube|Reddit|AP News|Forbes).*$",
+                "",
+                s_title,
+                flags=re.IGNORECASE
+            ).strip()
+
+            GENERIC_NOISE_WORDS = {"error", "definition", "meaning", "overview", "home", "index", "welcome", "about us", "pypdf", "python"}
+            is_generic = cleaned_title.lower() in GENERIC_NOISE_WORDS or len(cleaned_title.split()) < 2
+
+            if len(cleaned_title) < 12 or cleaned_title.lower().startswith("wikipedia:") or is_generic:
                 # Formulate assertion from snippet sentences
                 sentences = [sent.strip() for sent in re.split(r"[.!?]", s_snippet) if len(sent.strip()) > 35]
-                proposition = sentences[0] if sentences else cleaned_title
+                proposition = sentences[0] if sentences else (cleaned_title if not is_generic else "")
             else:
                 proposition = cleaned_title
 
-            if not proposition or proposition.lower() in seen_claim_texts:
+            if not proposition or len(proposition) < 15 or proposition.lower() in seen_claim_texts:
                 continue
+
+            # Reject any claim that appears to be an internal error message
+            if "error reading pdf" in proposition.lower() or "no module named" in proposition.lower():
+                continue
+
             seen_claim_texts.add(proposition.lower())
 
             # Evaluate stance of this specific claim

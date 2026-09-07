@@ -1,3 +1,4 @@
+import os
 import json
 import requests
 from typing import Optional, Dict, Any
@@ -12,7 +13,14 @@ class VeritasLLMClient:
     """
 
     def __init__(self, api_keys: Optional[Dict[str, str]] = None):
-        self.api_keys = api_keys or {}
+        self.api_keys = dict(api_keys or {})
+        # Automatically inherit from environment variables if not passed explicitly
+        if not self.api_keys.get("groq") and os.environ.get("GROQ_API_KEY"):
+            self.api_keys["groq"] = os.environ.get("GROQ_API_KEY")
+        if not self.api_keys.get("gemini") and (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
+            self.api_keys["gemini"] = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        if not self.api_keys.get("openai") and os.environ.get("OPENAI_API_KEY"):
+            self.api_keys["openai"] = os.environ.get("OPENAI_API_KEY")
 
     @property
     def has_active_llm(self) -> bool:

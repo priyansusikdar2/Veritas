@@ -27,7 +27,7 @@ import {
   ShieldAlert,
   Loader2
 } from 'lucide-react';
-import type { DossierReport } from '../types';
+import type { DossierReport, ApiKeys } from '../types';
 import { API_BASE } from '../config';
 import { DebateArenaView } from './DebateArenaView';
 import { BiasRadarView } from './BiasRadarView';
@@ -36,9 +36,10 @@ import { CertificateModal } from './CertificateModal';
 
 interface DossierViewProps {
   dossier: DossierReport;
+  apiKeys?: ApiKeys;
 }
 
-export const DossierView: React.FC<DossierViewProps> = ({ dossier }) => {
+export const DossierView: React.FC<DossierViewProps> = ({ dossier, apiKeys }) => {
   const [activeTab, setActiveTab] = useState<'paper' | 'methodology' | 'interrogate' | 'debate' | 'radar' | 'integrity' | 'claims' | 'contradictions' | 'sources' | 'markdown'>(
     dossier.debate_arena ? 'debate' : (dossier.paper_analysis ? 'paper' : 'claims')
   );
@@ -218,7 +219,8 @@ export const DossierView: React.FC<DossierViewProps> = ({ dossier }) => {
       const paperObj = dossier.paper_analysis ? {
         title: dossier.paper_analysis.title,
         abstract_summary: dossier.paper_analysis.abstract_summary,
-        key_assertions: dossier.paper_analysis.key_assertions
+        key_assertions: dossier.paper_analysis.key_assertions,
+        methodology_audit: dossier.paper_analysis.methodology_audit
       } : {
         title: dossier.query,
         abstract_summary: dossier.executive_summary,
@@ -232,9 +234,24 @@ export const DossierView: React.FC<DossierViewProps> = ({ dossier }) => {
           question: question.trim(),
           paper: paperObj,
           role: dossierInterrogateRole,
+          api_keys: apiKeys,
+          history: dossierInterrogationHistory.map(m => ({
+            role: m.role,
+            speaker: m.speaker,
+            text: m.text
+          })),
           dossier_context: {
             truth_score: dossier.truth_score,
-            citations: dossier.citations
+            verdict: dossier.verdict,
+            verdict_desc: dossier.verdict_desc,
+            executive_summary: dossier.executive_summary,
+            claims_breakdown: dossier.claims_breakdown,
+            contradictions: dossier.contradictions,
+            citations: dossier.citations,
+            methodology_audit: dossier.paper_analysis?.methodology_audit,
+            debate_arena: dossier.debate_arena,
+            citation_integrity: dossier.citation_integrity,
+            bias_telemetry: dossier.bias_telemetry
           }
         })
       });

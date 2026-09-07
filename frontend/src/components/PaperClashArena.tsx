@@ -10,7 +10,8 @@ import {
   BookOpen,
   Loader2,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
 import type { ResearchUploadedFile, PaperClashItem, ClashPaperProfile } from '../types';
 import { BENCHMARK_PAPERS } from './ResearchPaperLab';
@@ -322,12 +323,19 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
   const [paperB, setPaperB] = useState<ClashPaperProfile>(BENCHMARK_CLASH_PROFILES.mamba);
   const [activeSideSelector, setActiveSideSelector] = useState<'A' | 'B' | null>(null);
   const [selectorTab, setSelectorTab] = useState<'benchmarks' | 'uploaded' | 'upload_new'>('benchmarks');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
+  
+  // Independent parallel upload states for simultaneous non-blocking uploads
+  const [isUploadingA, setIsUploadingA] = useState<boolean>(false);
+  const [isUploadingB, setIsUploadingB] = useState<boolean>(false);
+  const [uploadProgressA, setUploadProgressA] = useState<string>('');
+  const [uploadProgressB, setUploadProgressB] = useState<string>('');
+  const [dragActiveDual, setDragActiveDual] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccessNotice, setUploadSuccessNotice] = useState<string | null>(null);
 
   const fileInputRefA = useRef<HTMLInputElement>(null);
   const fileInputRefB = useRef<HTMLInputElement>(null);
+  const fileInputRefDual = useRef<HTMLInputElement>(null);
 
   // Active papers to display based on mode
   const activePaperA = arenaMode === 'presets' ? selectedPreset.paperA : paperA;
@@ -346,12 +354,17 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
     }
   };
 
-  // Upload handler for Paper Alpha or Beta
-  const handleFileUpload = async (file: File, targetSide: 'A' | 'B') => {
-    if (!file) return;
-    setIsUploading(true);
+  // Independent upload handler for Paper Alpha or Beta (runs concurrently in parallel)
+  const handleFileUpload = async (file: File, targetSide: 'A' | 'B'): Promise<boolean> => {
+    if (!file) return false;
+    if (targetSide === 'A') {
+      setIsUploadingA(true);
+      setUploadProgressA('Fast PyPDF extraction...');
+    } else {
+      setIsUploadingB(true);
+      setUploadProgressB('Fast PyPDF extraction...');
+    }
     setUploadError(null);
-    setUploadSuccessNotice(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -368,7 +381,7 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
         const lowerAbstract = (uploadedFile.abstract_summary || '').toLowerCase();
         if (lowerTitle.includes('error reading') || lowerAbstract.includes('error reading') || lowerTitle.includes('no module named')) {
           setUploadError(uploadedFile.abstract_summary || 'Failed to extract readable text from the document. Please ensure it contains selectable text.');
-          return;
+          return false;
         }
         const profile = convertUploadedToProfile(uploadedFile);
         if (targetSide === 'A') {
@@ -379,21 +392,51 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
         if (onUploadPaper) {
           onUploadPaper(uploadedFile);
         }
-        // Switch to custom view so the user immediately sees the uploaded paper's results side-by-side
         setArenaMode('custom');
         setActiveSideSelector(null);
-        setUploadSuccessNotice(`✓ Successfully parsed ${file.name} for Paper ${targetSide}! Empirical thesis and assertions extracted.`);
+        setUploadSuccessNotice(`✓ Parsed ${file.name} for Paper ${targetSide} in sub-second time!`);
         setTimeout(() => setUploadSuccessNotice(null), 5000);
+        return true;
       } else {
-        setUploadError(data.message || 'Could not parse uploaded research paper');
+        setUploadError(data.message || `Could not parse uploaded research paper for Paper ${targetSide}`);
+        return false;
       }
     } catch (err: any) {
-      setUploadError(err?.message || 'Network error while uploading file');
+      setUploadError(err?.message || `Network error while uploading Paper ${targetSide}`);
+      return false;
     } finally {
-      setIsUploading(false);
-      if (fileInputRefA.current) fileInputRefA.current.value = '';
-      if (fileInputRefB.current) fileInputRefB.current.value = '';
+      if (targetSide === 'A') {
+        setIsUploadingA(false);
+        setUploadProgressA('');
+        if (fileInputRefA.current) fileInputRefA.current.value = '';
+      } else {
+        setIsUploadingB(false);
+        setUploadProgressB('');
+        if (fileInputRefB.current) fileInputRefB.current.value = '';
+      }
     }
+  };
+
+  // Simultaneous Dual-File Upload: uploads and parses both papers in parallel!
+  const handleDualFileUpload = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList).filter(f => f.name.match(/\.(pdf|txt|md)$/i));
+    if (files.length === 0) return;
+
+    if (files.length === 1) {
+      if (!isUploadingA) {
+        handleFileUpload(files[0], 'A');
+      } else {
+        handleFileUpload(files[0], 'B');
+      }
+      return;
+    }
+
+    // 2 or more files selected: Dispatch both simultaneously in parallel threads!
+    setUploadSuccessNotice(`⚡ Ingesting & parsing both papers simultaneously in parallel...`);
+    await Promise.all([
+      handleFileUpload(files[0], 'A'),
+      handleFileUpload(files[1], 'B')
+    ]);
   };
 
   // Synthesize dynamic clash query
@@ -441,15 +484,18 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
       flexDirection: 'column',
       gap: '24px'
     }}>
-      {/* Hidden File Inputs for Instant Native Uploading */}
+      {/* Hidden File Inputs for Instant Native Uploading & Dual Batch Drop */}
       <input
         ref={fileInputRefA}
         type="file"
         accept=".pdf,.txt,.md"
+        multiple
         style={{ display: 'none' }}
-        disabled={isUploading}
+        disabled={isUploadingA}
         onChange={(e) => {
-          if (e.target.files && e.target.files.length > 0) {
+          if (e.target.files && e.target.files.length > 1) {
+            handleDualFileUpload(e.target.files);
+          } else if (e.target.files && e.target.files.length === 1) {
             handleFileUpload(e.target.files[0], 'A');
           }
         }}
@@ -458,11 +504,27 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
         ref={fileInputRefB}
         type="file"
         accept=".pdf,.txt,.md"
+        multiple
         style={{ display: 'none' }}
-        disabled={isUploading}
+        disabled={isUploadingB}
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 1) {
+            handleDualFileUpload(e.target.files);
+          } else if (e.target.files && e.target.files.length === 1) {
+            handleFileUpload(e.target.files[0], 'B');
+          }
+        }}
+      />
+      <input
+        ref={fileInputRefDual}
+        type="file"
+        accept=".pdf,.txt,.md"
+        multiple
+        style={{ display: 'none' }}
+        disabled={isUploadingA && isUploadingB}
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
-            handleFileUpload(e.target.files[0], 'B');
+            handleDualFileUpload(e.target.files);
           }
         }}
       />
@@ -597,26 +659,66 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
       )}
 
       {/* FRONT & CENTER DUAL PAPER UPLOAD CONSOLE */}
-      <div style={{
-        padding: '20px 24px',
-        borderRadius: 'var(--radius-xl)',
-        background: 'rgba(15, 23, 42, 0.85)',
-        border: '1.5px solid rgba(56, 189, 248, 0.35)',
-        boxShadow: '0 12px 35px rgba(0, 0, 0, 0.45)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div 
+        onDragOver={(e) => { e.preventDefault(); setDragActiveDual(true); }}
+        onDragLeave={() => setDragActiveDual(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragActiveDual(false);
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleDualFileUpload(e.dataTransfer.files);
+          }
+        }}
+        style={{
+          padding: '22px 26px',
+          borderRadius: 'var(--radius-xl)',
+          background: dragActiveDual ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.85)',
+          border: dragActiveDual ? '2px dashed var(--cyan-neon)' : '1.5px solid rgba(56, 189, 248, 0.35)',
+          boxShadow: dragActiveDual ? '0 0 35px rgba(0, 242, 254, 0.3)' : '0 12px 35px rgba(0, 0, 0, 0.45)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          transition: 'all 0.2s ease'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <UploadCloud size={20} color="var(--cyan-neon)" />
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: 0 }}>
-              Direct Paper Upload & Matchup Station
-            </h3>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#fff', margin: 0 }}>
+                Direct Paper Upload & Matchup Station
+              </h3>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Upload independently or drop 2 papers simultaneously for instant side-by-side arbitration
+              </span>
+            </div>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Upload your own PDF/TXT research papers to immediately see them clashing with live empirical extraction
-          </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => fileInputRefDual.current?.click()}
+              disabled={isUploadingA && isUploadingB}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
+                border: '1px solid rgba(0, 242, 254, 0.4)',
+                color: '#fff',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: (isUploadingA && isUploadingB) ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Zap size={13} color="var(--cyan-neon)" />
+              <span>⚡ Dual Upload (2 Papers at Once)</span>
+            </button>
+          </div>
         </div>
 
         <div style={{
@@ -627,21 +729,24 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
         }}>
           {/* Side A Upload Pod */}
           <div
-            onClick={() => fileInputRefA.current?.click()}
+            onClick={() => !isUploadingA && fileInputRefA.current?.click()}
             style={{
               padding: '16px 20px',
               borderRadius: '12px',
-              border: '1.5px dashed rgba(56, 189, 248, 0.4)',
-              background: 'rgba(7, 10, 18, 0.65)',
-              cursor: 'pointer',
+              border: isUploadingA 
+                ? '1.5px solid rgba(56, 189, 248, 0.8)' 
+                : '1.5px dashed rgba(56, 189, 248, 0.4)',
+              background: isUploadingA ? 'rgba(7, 10, 18, 0.85)' : 'rgba(7, 10, 18, 0.65)',
+              boxShadow: isUploadingA ? '0 0 25px rgba(56, 189, 248, 0.25)' : 'none',
+              cursor: isUploadingA ? 'wait' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '14px',
-              transition: 'all 0.15s ease'
+              transition: 'all 0.2s ease'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
               <div style={{
                 width: '38px',
                 height: '38px',
@@ -650,42 +755,63 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--cyan-primary)'
+                color: 'var(--cyan-primary)',
+                flexShrink: 0
               }}>
-                <FileText size={20} />
+                {isUploadingA ? (
+                  <Loader2 size={20} color="var(--cyan-neon)" style={{ animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <FileText size={20} />
+                )}
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--cyan-primary)', textTransform: 'uppercase' }}>
-                  Candidate Paper Alpha
+                  Candidate Paper Alpha {isUploadingA && '— Ingesting...'}
                 </div>
                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {activePaperA.title}
+                  {isUploadingA ? 'Fast Neural PyPDF Extraction' : activePaperA.title}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  Click to upload new PDF / TXT
+                <div style={{ fontSize: '11px', color: isUploadingA ? 'var(--cyan-neon)' : 'var(--text-muted)' }}>
+                  {isUploadingA ? (uploadProgressA || 'Extracting thesis & assertions...') : 'Click or drop PDF to replace Alpha'}
                 </div>
               </div>
             </div>
 
             <button
               type="button"
+              disabled={isUploadingA}
+              onClick={(e) => { e.stopPropagation(); fileInputRefA.current?.click(); }}
               style={{
                 fontSize: '11.5px',
                 fontWeight: 800,
                 padding: '6px 12px',
                 borderRadius: '6px',
-                background: 'rgba(56, 189, 248, 0.15)',
+                background: isUploadingA ? 'rgba(56, 189, 248, 0.25)' : 'rgba(56, 189, 248, 0.15)',
                 border: '1px solid rgba(56, 189, 248, 0.3)',
                 color: 'var(--cyan-neon)',
-                cursor: 'pointer'
+                cursor: isUploadingA ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0
               }}
             >
-              Upload Alpha
+              {isUploadingA ? (
+                <>
+                  <Loader2 size={12} color="var(--cyan-neon)" style={{ animation: 'spin 1s linear infinite' }} />
+                  <span>Parsing...</span>
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={13} />
+                  <span>Upload Alpha</span>
+                </>
+              )}
             </button>
           </div>
 
-          {/* Middle Swap Button */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          {/* Middle Swap & Dual Action */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); handleSwapRivals(); }}
@@ -700,31 +826,38 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
                 color: 'var(--violet-neon)',
                 fontSize: '12px',
                 fontWeight: 800,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
             >
               <ArrowRightLeft size={14} />
               <span>Swap Rivals</span>
             </button>
+            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+              Parallel & Independent
+            </span>
           </div>
 
           {/* Side B Upload Pod */}
           <div
-            onClick={() => fileInputRefB.current?.click()}
+            onClick={() => !isUploadingB && fileInputRefB.current?.click()}
             style={{
               padding: '16px 20px',
               borderRadius: '12px',
-              border: '1.5px dashed rgba(168, 85, 247, 0.4)',
-              background: 'rgba(7, 10, 18, 0.65)',
-              cursor: 'pointer',
+              border: isUploadingB 
+                ? '1.5px solid rgba(168, 85, 247, 0.8)' 
+                : '1.5px dashed rgba(168, 85, 247, 0.4)',
+              background: isUploadingB ? 'rgba(7, 10, 18, 0.85)' : 'rgba(7, 10, 18, 0.65)',
+              boxShadow: isUploadingB ? '0 0 25px rgba(168, 85, 247, 0.25)' : 'none',
+              cursor: isUploadingB ? 'wait' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '14px',
-              transition: 'all 0.15s ease'
+              transition: 'all 0.2s ease'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
               <div style={{
                 width: '38px',
                 height: '38px',
@@ -733,37 +866,58 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--violet-neon)'
+                color: 'var(--violet-neon)',
+                flexShrink: 0
               }}>
-                <FileText size={20} />
+                {isUploadingB ? (
+                  <Loader2 size={20} color="var(--violet-neon)" style={{ animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <FileText size={20} />
+                )}
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--violet-neon)', textTransform: 'uppercase' }}>
-                  Candidate Paper Beta (Challenger)
+                  Candidate Paper Beta (Challenger) {isUploadingB && '— Ingesting...'}
                 </div>
                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#fff', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {activePaperB.title}
+                  {isUploadingB ? 'Fast Neural PyPDF Extraction' : activePaperB.title}
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  Click to upload new PDF / TXT
+                <div style={{ fontSize: '11px', color: isUploadingB ? 'var(--violet-neon)' : 'var(--text-muted)' }}>
+                  {isUploadingB ? (uploadProgressB || 'Extracting thesis & assertions...') : 'Click or drop PDF to replace Beta'}
                 </div>
               </div>
             </div>
 
             <button
               type="button"
+              disabled={isUploadingB}
+              onClick={(e) => { e.stopPropagation(); fileInputRefB.current?.click(); }}
               style={{
                 fontSize: '11.5px',
                 fontWeight: 800,
                 padding: '6px 12px',
                 borderRadius: '6px',
-                background: 'rgba(168, 85, 247, 0.15)',
+                background: isUploadingB ? 'rgba(168, 85, 247, 0.25)' : 'rgba(168, 85, 247, 0.15)',
                 border: '1px solid rgba(168, 85, 247, 0.3)',
                 color: 'var(--violet-neon)',
-                cursor: 'pointer'
+                cursor: isUploadingB ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flexShrink: 0
               }}
             >
-              Upload Beta
+              {isUploadingB ? (
+                <>
+                  <Loader2 size={12} color="var(--violet-neon)" style={{ animation: 'spin 1s linear infinite' }} />
+                  <span>Parsing...</span>
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={13} />
+                  <span>Upload Beta</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -1099,15 +1253,23 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
                 color: '#07090e',
                 fontSize: '12.5px',
                 fontWeight: 800,
-                cursor: isUploading ? 'not-allowed' : 'pointer'
+                cursor: ((activeSideSelector === 'A' ? isUploadingA : isUploadingB)) ? 'wait' : 'pointer'
               }}>
-                {isUploading ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
-                <span>{isUploading ? 'Parsing Research Paper...' : 'Choose File to Upload'}</span>
+                {((activeSideSelector === 'A' ? isUploadingA : isUploadingB)) ? (
+                  <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <FileText size={15} />
+                )}
+                <span>
+                  {((activeSideSelector === 'A' ? isUploadingA : isUploadingB)) 
+                    ? `Parsing Paper ${activeSideSelector || 'A'}...` 
+                    : 'Choose File to Upload'}
+                </span>
                 <input
                   type="file"
                   accept=".pdf,.txt,.md"
                   style={{ display: 'none' }}
-                  disabled={isUploading}
+                  disabled={activeSideSelector === 'A' ? isUploadingA : isUploadingB}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       handleFileUpload(e.target.files[0], activeSideSelector || 'A');
@@ -1155,23 +1317,28 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
 
               <button
                 type="button"
+                disabled={isUploadingA}
                 onClick={() => fileInputRefA.current?.click()}
                 style={{
                   fontSize: '11px',
                   fontWeight: 700,
                   padding: '3px 8px',
                   borderRadius: '6px',
-                  background: 'rgba(56, 189, 248, 0.15)',
+                  background: isUploadingA ? 'rgba(56, 189, 248, 0.25)' : 'rgba(56, 189, 248, 0.15)',
                   border: '1px solid rgba(56, 189, 248, 0.35)',
                   color: 'var(--cyan-neon)',
-                  cursor: 'pointer',
+                  cursor: isUploadingA ? 'wait' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px'
                 }}
               >
-                <UploadCloud size={12} />
-                <span>Upload PDF</span>
+                {isUploadingA ? (
+                  <Loader2 size={12} color="var(--cyan-neon)" style={{ animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <UploadCloud size={12} />
+                )}
+                <span>{isUploadingA ? 'Parsing Alpha...' : 'Upload PDF'}</span>
               </button>
 
               <button
@@ -1277,23 +1444,28 @@ export const PaperClashArena: React.FC<PaperClashArenaProps> = ({
 
               <button
                 type="button"
+                disabled={isUploadingB}
                 onClick={() => fileInputRefB.current?.click()}
                 style={{
                   fontSize: '11px',
                   fontWeight: 700,
                   padding: '3px 8px',
                   borderRadius: '6px',
-                  background: 'rgba(168, 85, 247, 0.15)',
+                  background: isUploadingB ? 'rgba(168, 85, 247, 0.25)' : 'rgba(168, 85, 247, 0.15)',
                   border: '1px solid rgba(168, 85, 247, 0.35)',
                   color: 'var(--violet-neon)',
-                  cursor: 'pointer',
+                  cursor: isUploadingB ? 'wait' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px'
                 }}
               >
-                <UploadCloud size={12} />
-                <span>Upload PDF</span>
+                {isUploadingB ? (
+                  <Loader2 size={12} color="var(--violet-neon)" style={{ animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <UploadCloud size={12} />
+                )}
+                <span>{isUploadingB ? 'Parsing Beta...' : 'Upload PDF'}</span>
               </button>
 
               <button

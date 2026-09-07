@@ -15,7 +15,7 @@ class ResearchFileParser:
         Forensically analyzes the manuscript for P-hacking indicators, sample size adequacy,
         baseline cherry-picking, and corporate conflict-of-interest risks.
         """
-        text_lower = cleaned_text.lower()
+        text_lower = cleaned_text[:25000].lower()
         
         # 1. Sample Size Adequacy & Statistical Power
         sample_patterns = [
@@ -269,7 +269,7 @@ class ResearchFileParser:
         pages_text: List[str] = []
         page_count = 1
 
-        # Strategy 1: pypdf
+        # Strategy 1: pypdf (fast scanning first 8 pages with early exit)
         try:
             import pypdf
             reader = pypdf.PdfReader(io.BytesIO(file_bytes))
@@ -279,39 +279,49 @@ class ResearchFileParser:
                 except Exception:
                     pass
             page_count = max(1, len(reader.pages))
-            # Scan up to first 25 pages to cover abstract, intro, methods, and evaluation
-            for p in reader.pages[:25]:
+            accumulated_chars = 0
+            # Scan first 8 pages (sufficient for title, abstract, introduction & methodology)
+            for p in reader.pages[:8]:
                 try:
                     txt = p.extract_text()
                     if txt and txt.strip():
-                        pages_text.append(txt.strip())
+                        s_txt = txt.strip()
+                        pages_text.append(s_txt)
+                        accumulated_chars += len(s_txt)
+                        if accumulated_chars >= 15000:
+                            break
                 except Exception:
                     continue
-        except Exception as e:
-            # Fall through to fallback strategies
+        except Exception:
             pass
 
-        # Strategy 2: PyMuPDF (fitz) if installed in the environment
+        # Strategy 2: PyMuPDF (fitz) if installed and pypdf yielded nothing
         if not pages_text:
             try:
                 import importlib
                 fitz = importlib.import_module("fitz")
                 doc = fitz.open(stream=file_bytes, filetype="pdf")
                 page_count = max(1, len(doc))
-                for page in doc[:25]:
+                accumulated_chars = 0
+                for page in doc[:8]:
                     txt = page.get_text()
                     if txt and txt.strip():
-                        pages_text.append(txt.strip())
+                        s_txt = txt.strip()
+                        pages_text.append(s_txt)
+                        accumulated_chars += len(s_txt)
+                        if accumulated_chars >= 15000:
+                            break
             except Exception:
                 pass
 
-        # Strategy 3: Pure Python stream decompression fallback
+        # Strategy 3: Pure Python stream decompression fallback (scans first 3MB quickly)
         if not pages_text:
             try:
                 import zlib
-                raw_streams = re.findall(rb"stream[\r\n]+(.*?)[\r\n]+endstream", file_bytes, re.DOTALL)
+                fast_bytes = file_bytes[:3145728]
+                raw_streams = re.findall(rb"stream[\r\n]+(.*?)[\r\n]+endstream", fast_bytes, re.DOTALL)
                 extracted_snippets = []
-                for s in raw_streams:
+                for s in raw_streams[:20]:
                     decompressed = b""
                     try:
                         decompressed = zlib.decompress(s)
@@ -321,12 +331,13 @@ class ResearchFileParser:
                         except Exception:
                             decompressed = s
 
-                    # Extract text inside PDF parenthesis strings (Tj and TJ operators)
                     matches = re.findall(rb"\((.*?)\)\s*Tj", decompressed)
                     if matches:
                         chunk = " ".join([m.decode("latin-1", errors="ignore") for m in matches if len(m) > 1])
                         if len(chunk) > 20:
                             extracted_snippets.append(chunk)
+                    if len(" ".join(extracted_snippets)) >= 10000:
+                        break
 
                 if extracted_snippets:
                     pages_text = extracted_snippets

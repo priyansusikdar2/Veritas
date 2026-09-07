@@ -467,6 +467,7 @@ export function App() {
               setActivePaper(p);
               if (p) handleAddUploadedPaper(p);
             }}
+            apiKeys={apiKeys}
           />
         )}
 
@@ -711,7 +712,7 @@ export function App() {
                 {/* Investigative Dossier Section */}
                 {dossier && (
                   <div style={{ marginTop: '32px', width: '100%', position: 'relative', clear: 'both' }}>
-                    <DossierView dossier={dossier} />
+                    <DossierView dossier={dossier} apiKeys={apiKeys} />
                   </div>
                 )}
               </>

@@ -16,7 +16,7 @@ import {
   MessageSquare,
   Send
 } from 'lucide-react';
-import type { ResearchUploadedFile } from '../types';
+import type { ResearchUploadedFile, ApiKeys } from '../types';
 import { API_BASE } from '../config';
 
 export const BENCHMARK_PAPERS: ResearchUploadedFile[] = [
@@ -277,13 +277,15 @@ interface ResearchPaperLabProps {
   isLoading: boolean;
   activePaper: ResearchUploadedFile | null;
   onPaperChange: (paper: ResearchUploadedFile | null) => void;
+  apiKeys?: ApiKeys;
 }
 
 export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
   onStartInvestigation,
   isLoading,
   activePaper,
-  onPaperChange
+  onPaperChange,
+  apiKeys
 }) => {
   const [depth, setDepth] = useState<'quick' | 'deep' | 'exhaustive'>('deep');
   const [customQuery, setCustomQuery] = useState('');
@@ -363,21 +365,26 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
+  const [uploadStage, setUploadStage] = useState<string>('');
+
   const handleUploadFile = async (file: File) => {
     if (!file) return;
     setIsUploading(true);
+    setUploadStage('Reading file stream & preparing buffers...');
     setUploadError(null);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
+      setUploadStage('Fast PyPDF extraction & hypothesis parsing...');
       const resp = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData
       });
       const data = await resp.json();
       if (data.status === 'success' && data.file) {
+        setUploadStage('Synthesizing methodology audit & key assertions...');
         const fileData = data.file;
         const lowerTitle = (fileData.title || '').toLowerCase();
         const lowerAbstract = (fileData.abstract_summary || '').toLowerCase();
@@ -398,6 +405,7 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
       setUploadError(err?.message || 'Network error while uploading file');
     } finally {
       setIsUploading(false);
+      setUploadStage('');
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -452,7 +460,18 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
         body: JSON.stringify({
           question: q.trim(),
           paper: activePaper,
-          role: interrogationRole
+          role: interrogationRole,
+          api_keys: apiKeys,
+          history: interrogationHistory.map(m => ({
+            role: m.role,
+            speaker: m.speaker,
+            text: m.text
+          })),
+          dossier_context: {
+            methodology_audit: activePaper.methodology_audit,
+            key_assertions: activePaper.key_assertions,
+            abstract_summary: activePaper.abstract_summary
+          }
         })
       });
       const data = await resp.json();
@@ -730,10 +749,10 @@ export const ResearchPaperLab: React.FC<ResearchPaperLabProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
             <Loader2 size={36} color="var(--cyan-neon)" style={{ animation: 'spin 1s linear infinite' }} />
             <span style={{ fontSize: '14px', color: '#fff', fontWeight: 700 }}>
-              Parsing PDF with PyPDF & extracting author assertions...
+              {uploadStage || 'Parsing PDF with PyPDF & extracting author assertions...'}
             </span>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Neural text extraction and hypothesis isolation in progress
+            <span style={{ fontSize: '12px', color: 'var(--cyan-neon)' }}>
+              ⚡ Sub-second non-blocking multi-thread extraction
             </span>
           </div>
         ) : activePaper ? (

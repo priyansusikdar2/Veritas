@@ -12,59 +12,66 @@
 
 <br />
 
-### 🌐 [Click Here to Launch Live App on Render (https://veritas-1-cswk.onrender.com/)](https://veritas-1-cswk.onrender.com/)
+### 🌐 [Launch Live App on Render (https://veritas-1-cswk.onrender.com/)](https://veritas-1-cswk.onrender.com/)
 
 <br />
 
-[Live Demo](https://veritas-1-cswk.onrender.com/) • [Key Features](#-key-features) • [Architecture](#-multi-agent-architecture) • [Quickstart](#-quickstart) • [Deploy on Render](DEPLOYMENT_RENDER.md) • [Live Demos](#-benchmark-showcase) • [API Reference](#-api-reference)
+[Live Demo](https://veritas-1-cswk.onrender.com/) • [The Crisis & Solution](#-the-problem--the-veritas-solution) • [Key Features](#-key-features) • [System Architecture](#-multi-agent-architecture) • [Oral Defense Terminal](#-oral-defense--adversarial-examination) • [Quickstart](#-quickstart-local-development) • [API Reference](#-api-reference) • [Tech Stack](#-tech-stack)
 
 </div>
 
 ---
 
-## 📌 The Problem & The Solution
+## 📌 The Problem & The Veritas Solution
 
-- **The Replication Crisis**: Over **70% of researchers** have failed to reproduce another scientist's experiments. Thousands of non-reproducible or p-hacked preprints are uploaded monthly across arXiv, bioRxiv, and conference proceedings.
-- **The AI Failure Mode**: LLM chat interfaces summarize papers uncritically and hallucinate academic citations with high confidence.
-- **The Veritas Solution**: Veritas treats scientific verification as an **adversarial forensic investigation**. It extracts empirical assertions, crawls live academic repositories (arXiv, Nature, IEEE, PNAS, PubMed), calculates rigorous Bayesian truth scores, detects statistical red-flags (sample size $N$, p-hacking clustering, missing ablations), and conducts real-time doctoral defense cross-examinations.
+- **The Replication Crisis**: Over **70% of researchers** have failed to replicate another scientist’s experiment, and more than **50% have failed to reproduce their own experiments** (*Nature*). Thousands of preprints with uncalibrated baselines, low-power cohorts ($N < 30$), and p-hacked thresholds ($p \approx 0.049$) are uploaded monthly to arXiv, bioRxiv, and open proceedings.
+- **The LLM Blindspot**: Standard LLM chat interfaces uncritically summarize manuscripts, accept author claims at face value, and hallucinate academic citations with high confidence.
+- **The Veritas Solution**: Veritas treats scientific verification as an **adversarial forensic investigation**. It extracts falsifiable empirical assertions, crawls live high-authority academic repositories (arXiv, Nature, IEEE, PubMed, PNAS), calculates rigorous 5-pillar Bayesian truth scores, detects statistical red flags, and conducts real-time doctoral defense cross-examinations.
 
 ---
 
 ## 🚀 Key Features
 
-### 1. ⚡ Instant ArXiv / DOI Quick Resolver
-- **Zero-Upload Preprints**: Ingest any arXiv link or ID (e.g. `2307.12008`, `1706.03762`, `2501.12948`) or DOI in under 1 second via the arXiv Atom API.
-- Automatically extracts authors, institutions, executive abstract, publication timestamp, and isolates key falsifiable empirical assertions.
-- 1-click test chips for immediate live testing without uploading files.
+### 1. ⚡ High-Speed Paper Ingestion & ArXiv / DOI Resolver
+- **Instant ArXiv & DOI Resolution**: Ingest any arXiv link or ID (e.g. `2307.12008`, `1706.03762`, `2501.12948`) or DOI in under 1 second via the arXiv Atom XML and CrossRef APIs.
+- **Sub-Second PDF Parser**: Multi-tier PDF parser (`pypdf` + pure-Python zlib stream fallback + dynamic PyMuPDF) with early-exit reading that parses preprints in **< 150ms**.
+- **Non-Blocking Thread Pool**: All file ingestion runs off the main asyncio event loop, keeping streaming UI telemetry smooth and responsive.
+- **Simultaneous Batch Upload**: Upload Paper A and Paper B simultaneously with dedicated parallel dropzones and multi-file selection.
 
 ### 2. 🔬 Forensic Methodology & P-Hacking Red-Flag Scanner
-- **Replication Hazard Score (0–100%)**: Quantitative index reflecting vulnerability to false-discovery and non-reproducibility.
-- **Sample Scale ($N$) Verification**: Detects low-power studies ($N < 30$), flags small cohort sizes, and verifies benchmark scales.
-- **Comparative Baselines & Ablations**: Detects whether control baselines, standard error margins (95% CI), or ablation studies were isolated.
-- **COI & Independence Radar**: Analyzes corporate affiliations (e.g., big tech AI labs, pharmaceutical funding) and conflicts of interest.
+- **Replication Hazard Index (0–100%)**: Quantitative metric reflecting vulnerability to false-discovery and non-reproducibility.
+- **Sample Scale ($N$) Verification**: Detects low-power studies, small cohort sizes, and verifies benchmark sample volumes ($N$).
+- **Comparative Baselines & Ablations**: Detects whether competitive baselines, standard error margins (95% CI), or component ablations were reported.
+- **COI & Independence Radar**: Analyzes corporate affiliations (Big Tech AI labs, pharmaceutical funding) and author conflicts of interest.
 
 ### 3. ⚔️ Doctoral Defense & Adversarial Committee Interrogation
-- **Chief Inquisitor Mode (Attack)**: Exposes methodological vulnerabilities, missing baselines, p-value clustering, and lack of independent blind reproduction.
-- **Defense Advocate Mode (Defend)**: Synthesizes empirical defenses, highlighting experimental controls, error margins, and statistical convergence.
-- Cites live web findings, paper assertions, and empirical truth scores in real time.
+- **Chief Inquisitor Mode (Attack)**: Aggressively probes methodological vulnerabilities, missing baselines, p-hacking risks, lack of independent reproduction, and selection bias.
+- **Defense Advocate Mode (Defend)**: Synthesizes empirical defenses, citing experimental controls, error margins, statistical convergence, and theoretical bounds.
+- **Dynamic Evidence Grounding**: Answers directly reference the paper's actual assertions, sample size $N$, P-hacking score, live contradictions, and web citations rather than generic canned answers.
 
-### 4. 🔗 Paper Evidence Traceability Matrix
-- Solves the *"20 generic websites searched"* black-box problem.
-- Automatically formulates specialized academic subqueries: `[REPLICATION]`, `[ASSERTION 1..N]`, `[CRITIQUE]`, and `[CONSENSUS]`.
-- Maps every paper claim to corroborating or disputing live sources with verbatim text quotes, domain authority weights, and stance tags.
-
-### 5. 🥊 Paper Clash Arena (Head-to-Head Benchmark Arena)
+### 4. 🥊 Paper Clash Arena (Head-to-Head Benchmark Arena)
 - Empirical battleground comparing competing papers side-by-side:
   - *Transformers (`Attention Is All You Need`)* vs. *Linear State Spaces (`Mamba`)*
   - *Pure RL Reasoning (`DeepSeek-R1`)* vs. *Proprietary CoT (`OpenAI o1`)*
   - *Biomolecular Diffusion (`AlphaFold 3`)* vs. *Molecular Docking Baselines*
   - *Room-Temp Superconductors (`LK-99`)* vs. *Condensed Matter Replications*
+- Simultaneous drag-and-drop dual upload for comparative audits.
 
-### 6. 🔏 Cryptographic Truth Vault & 1-Click Executive PDF Export
+### 5. 🔗 Paper Evidence Traceability Matrix & Contradictions Detector
+- Solves the *"20 generic search results"* black-box problem.
+- Automatically formulates specialized academic subqueries: `[REPLICATION]`, `[ASSERTION 1..N]`, `[CRITIQUE]`, and `[CONSENSUS]`.
+- Maps every paper claim to corroborating or disputing live sources with verbatim text quotes, domain authority weights, and stance tags.
+
+### 6. 🌐 Dynamic Knowledge Graph & Thought Canvas
+- Interactive canvas powered by SVG and Canvas with force-directed physics.
+- Visualizes the forensic graph: Query $\rightarrow$ Extracted Claims $\rightarrow$ Live Web Citations $\rightarrow$ Contradictions $\rightarrow$ Arbiter Verdict.
+- Interactive node inspector drawer for deep drill-down into source metadata, reliability tiers, and confidence scores.
+
+### 7. 🔏 Cryptographic Truth Vault & 1-Click Executive PDF Export
 - **Cryptographic Audit Seal**: Generates a verifiable SHA-256 hash signature and digital Truth Certificate for every audit.
 - **Printable Executive Brief**: One-click **Export Executive Dossier (PDF)** button with clean `@media print` rules for grant committees, universities, and review boards.
 
-### 7. 🎙️ Veritas Audio Briefing Studio & Dynamic Waveform Visualizer
+### 8. 🎙️ Veritas Audio Briefing Studio
 - Integrated neural speech synthesis for paper abstracts, hypotheses, and peer reviews.
 - Dynamic 7-bar cyan frequency waveform visualizer for executive on-the-go briefings.
 
@@ -72,35 +79,64 @@
 
 ## 🧠 Multi-Agent Architecture
 
-Veritas runs an asynchronous, cyclic **LangGraph DAG** that orchestrates specialized autonomous agents:
+Veritas runs an asynchronous, cyclic **LangGraph DAG** orchestrating specialized autonomous agents:
 
 ```mermaid
 flowchart TD
-    A["User Input / ArXiv Quick Resolver"] --> B["Search Coordinator Agent"]
-    B -->|"Dynamic Academic Subqueries\n(Replication, Baselines, Critique)"| C["Reader & Crawler Agent"]
-    C -->|"Live Web & Academic Filtering\n(arXiv, Nature, PNAS, IEEE)"| D["Cross-Examiner Agent"]
+    A["User Input / ArXiv Resolver / PDF Ingestion"] --> B["Search Coordinator Agent"]
+    B -->|"Specialized Subqueries\n(Replication, Baselines, Critique)"| C["Reader & Crawler Agent"]
+    C -->|"Live Web & Academic Filtering\n(arXiv, Nature, IEEE, PubMed)"| D["Cross-Examiner Agent"]
     D -->|"Adversarial Stance Verification\n& 5-Pillar Bayesian Truth Engine"| E["Dossier Agent"]
-    E --> F["Interactive Dossier View"]
+    E --> F["Interactive Thought Canvas (Graph View)"]
     E --> G["Paper Evidence Traceability Matrix"]
     E --> H["Oral Defense Terminal"]
     E --> I["SHA-256 Cryptographic Truth Seal"]
 ```
 
-### Agent Roles:
-- **Search Coordinator**: Generates targeted scientific subqueries, categorizing queries by empirical claim angle rather than naive keywords.
-- **Reader Agent**: Crawls live search vectors (DuckDuckGo + Tavily fallback), filters low-credibility social noise, and extracts verbatim snippets.
-- **Cross-Examiner**: Runs Bayesian scoring across 5 pillars (Source Authority, Web Consensus, Claim Specificity, Logical Consistency, Empirical Replication).
-- **Dossier Agent**: Compiles the final forensic dossier, links citations, attaches the methodology rigor audit, and issues the cryptographic stamp.
+### Agent Specialization:
+1. **Search Coordinator Agent**: Analyzes the manuscript's thesis and formulates targeted scientific subqueries categorized by claim angle, baseline contestation, and replication attempts rather than generic keywords.
+2. **Reader & Crawler Agent**: Crawls live search vectors (DuckDuckGo `ddgs` + Tavily fallback), filters low-credibility social noise and generic dictionary domains, and extracts verbatim snippets.
+3. **Cross-Examiner Agent**: Executes the **5-Pillar Bayesian Truth Engine**:
+   - **Source Authority** (0–100): Weighted by academic domain authority (arXiv, Nature, IEEE, PubMed vs. general blogs).
+   - **Web Consensus** (0–100): Measures the ratio of corroborating vs. refuting third-party sources.
+   - **Claim Specificity** (0–100): Penalizes vague, unfalsifiable claims; rewards quantitative assertions ($N$, $p$-values, effect sizes).
+   - **Logical Consistency** (0–100): Checks for internal mathematical and causal contradictions.
+   - **Empirical Replication** (0–100): Audits independent external laboratory or codebase reproductions.
+4. **Dossier Agent**: Compiles the final forensic dossier, links citations, attaches the methodology rigor audit, and issues the cryptographic stamp.
 
 ---
 
-## 🌐 Live Production Deployment
+## ⚔️ Oral Defense & Adversarial Examination
 
-Veritas is deployed and accessible on Render:
+The **Oral Defense Terminal** functions as a doctoral thesis examination committee. You can toggle between:
 
-- **Live Application**: [https://veritas-1-cswk.onrender.com/](https://veritas-1-cswk.onrender.com/)
-- **API Health Endpoint**: [https://veritas-1-cswk.onrender.com/api/health](https://veritas-1-cswk.onrender.com/api/health)
-- **Presets Endpoint**: [https://veritas-1-cswk.onrender.com/api/presets](https://veritas-1-cswk.onrender.com/api/presets)
+- ⚔️ **Chief Inquisitor (Attack)**: Relentlessly challenges methodology, exposes sample size vulnerabilities, questions baseline selection, and demands unreleased telemetry.
+- 🛡️ **Defense Advocate (Defend)**: Justifies experimental validity, cites statistical convergence, explains theoretical boundary conditions, and defends empirical effect sizes.
+
+### Example Examination Queries Supported:
+| Category | Example Question | What Veritas Examines |
+|---|---|---|
+| **Score Derivation** | *"Why did the empirical truth score resolve to this specific level?"* | Breaks down Bayesian corroboration rate, contradiction penalties, and P-hacking calibration. |
+| **Authenticity Verdict** | *"Is the research true, or is it an artifact of idealized conditions?"* | Evaluates verified assertions vs. unverified boundary conditions. |
+| **P-Hacking & Rigor** | *"What are the p-hacking and sample-size vulnerabilities of these claims?"* | Inspects sample scale ($N$), P-hacking risk index, and missing ablations. |
+| **Contradictions** | *"What are the most contentious web contradictions identified?"* | Identifies opposing peer literature, conflicting preprints, and conflicting benchmarks. |
+| **Replication** | *"Did the live search uncover independent third-party replication attempts?"* | Checks replication hazard score, open telemetry, code availability, and multi-lab replication. |
+| **Conflicts of Interest** | *"What corporate or commercial conflicts of interest exist in this paper?"* | Analyzes author affiliations, corporate sponsorship, and institutional incentives. |
+
+---
+
+## 🧪 Benchmark Paper Catalog
+
+Veritas comes pre-loaded with landmark benchmark papers ready for instant 1-click forensic audits:
+
+| Benchmark Paper | Domain | Primary Hypothesis Audited | Empirical Truth Score | Replication Hazard |
+|---|---|---|---|---|
+| **LK-99 Ambient Superconductor** | Condensed Matter Physics | Room-temperature, ambient-pressure superconductivity | `18% (DEBUNKED)` | `78% (CRITICAL)` |
+| **DeepSeek-R1: Pure RL Reasoning** | Foundation AI & Reasoning | Pure large-scale RL induces self-correction without SFT | `92% (VERIFIED)` | `22% (LOW)` |
+| **Attention Is All You Need** | Deep Learning Architecture | Eliminating recurrence via multi-head self-attention | `98% (VERIFIED)` | `8% (MINIMAL)` |
+| **AlphaFold 3 Biomolecular Modeling** | Structural Biology | Joint diffusion predictions across DNA, RNA, and ligands | `94% (VERIFIED)` | `16% (LOW)` |
+| **Google Sycamore Quantum Supremacy** | Quantum Computing | 53-qubit superconducting processor sampling advantage | `61% (CONTESTED)` | `48% (ELEVATED)` |
+| **USRILS Cognitive Learning** | Adaptive AI & Optimization | Unified Self-Regulating Intelligent Learning System | `86% (VERIFIED)` | `16% (LOW)` |
 
 ---
 
@@ -111,24 +147,35 @@ Veritas is deployed and accessible on Render:
 - **Node.js**: 18+
 - **Package Managers**: `pip` and `npm`
 
+---
+
 ### 1. Clone & Set Up Backend
 
 ```bash
-cd backend
+# Clone repository
+git clone https://github.com/priyansusikdar2/Veritas.git
+cd Veritas
+
+# Create Python virtual environment
 python -m venv venv
-# Windows:
-.\venv\Scripts\activate
+
+# Activate virtual environment
+# Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
 # Linux/macOS:
 source venv/bin/activate
 
-pip install -r requirements.txt
+# Install dependencies
+pip install -r backend/requirements.txt
 ```
 
-Start the FastAPI backend:
+Start the FastAPI backend server:
 ```bash
 python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 The backend will be live at `http://127.0.0.1:8000`.
+
+---
 
 ### 2. Set Up Frontend
 
@@ -138,22 +185,24 @@ cd frontend
 npm install
 npm run dev
 ```
-The interface will be live at `http://127.0.0.1:5173`.
-
-> **Note on API Keys**: Veritas is fully autonomous out-of-the-box! It includes built-in web search scraping (DuckDuckGo `ddgs`) and local heuristic extraction. You can optionally add Google Gemini, OpenAI, Groq, or Tavily keys in the Settings modal for multi-LLM synthesis.
+The application interface will be live at `http://127.0.0.1:5173`.
 
 ---
 
-## ☁️ Deploy Your Own on Render in 60 Seconds
+### 3. API Keys (Zero-Configuration Autonomous Mode)
 
-Veritas includes a pre-configured [`render.yaml`](render.yaml) blueprint for 1-click cloud deployment:
+> **Veritas works 100% out of the box with NO API keys required!**
+> Built-in DuckDuckGo (`ddgs`) crawling and local forensic synthesis operate autonomously.
 
-1. Push your repository to GitHub.
-2. In the [Render Dashboard](https://dashboard.render.com), click **New +** $\rightarrow$ **Blueprint**.
-3. Connect your repository and click **Apply**.
-4. Render automatically builds the React SPA, installs the Python FastAPI backend, and provisions your live URL.
+For enhanced multi-model synthesis, you can optionally configure keys:
+- **In the UI**: Click the ⚙️ **Settings** icon in the sidebar and enter your keys (stored securely in browser `localStorage`).
+- **Via Environment Variables**: Set `GROQ_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `TAVILY_API_KEY` in your environment or `.env` file.
 
-For manual dashboard setup and free-tier tips, see the complete [Render Deployment Guide](DEPLOYMENT_RENDER.md).
+Supported LLM Providers:
+- **Groq** (Default: `llama-3.1-8b-instant`, auto-discovers active LLaMA 3.3 models)
+- **Google Gemini** (`gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-1.5-pro`)
+- **OpenAI** (`gpt-4o-mini`, `gpt-4o`)
+- **Autonomous Built-In Engine** (Local heuristic synthesis)
 
 ---
 
@@ -161,36 +210,40 @@ For manual dashboard setup and free-tier tips, see the complete [Render Deployme
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/resolve-paper` | Resolves an arXiv URL or ID into title, authors, abstract, assertions, and methodology audit. |
-| `POST` | `/api/interrogate-paper` | Conducts real-time cross-examination under `inquisitor` or `advocate` persona. |
+| `POST` | `/api/upload` | Uploads and parses a PDF/TXT/Markdown research paper in sub-second non-blocking thread. |
+| `POST` | `/api/upload-batch` | Concurrently parses multiple files in parallel across worker threads. |
+| `POST` | `/api/resolve-paper` | Resolves an arXiv URL/ID or DOI into structured metadata, assertions, and methodology audit. |
+| `POST` | `/api/interrogate-paper` | Conducts real-time doctoral defense examination under `inquisitor` or `advocate` persona. |
 | `POST` | `/api/research/stream` | Server-Sent Events (SSE) streaming of the multi-agent LangGraph workflow. |
-| `GET` | `/api/benchmark-papers` | Returns catalog of pre-computed research papers with full statistical audits. |
-| `GET` | `/api/presets` | Returns curated investigation presets (LK-99, DeepSeek-R1, AlphaFold 3, etc.). |
-| `GET` | `/api/health` | Healthcheck and active search/LLM provider telemetry. |
+| `GET` | `/api/presets` | Returns curated presets (LK-99, DeepSeek-R1, AlphaFold 3, etc.). |
+| `GET` | `/api/health` | Service health status, search provider, and active LLM configuration. |
 
 ---
 
-## 🧪 Benchmark Showcase
+## ☁️ Deployment on Render
 
-| Benchmark Paper | Domain | Primary Challenge Audited | Truth Score | Replication Hazard |
-|---|---|---|---|---|
-| **LK-99 Ambient Superconductor** | Condensed Matter | Zero resistance & room-temp levitation claims | `18% (DEBUNKED)` | `78% (CRITICAL)` |
-| **DeepSeek-R1: Pure RL Reasoning** | Artificial Intelligence | SFT-free reasoning matching OpenAI o1 | `92% (VERIFIED)` | `22% (LOW)` |
-| **Attention Is All You Need** | Deep Learning | Eliminating recurrence via multi-head self-attention | `98% (VERIFIED)` | `8% (MINIMAL)` |
-| **AlphaFold 3 Complex Modeling** | Structural Biology | Joint diffusion predictions across DNA/RNA/ligands | `94% (VERIFIED)` | `16% (LOW)` |
-| **Google Sycamore Supremacy** | Quantum Computing | 53-qubit 200s advantage vs. classical supercomputers | `61% (CONTESTED)`| `48% (ELEVATED)` |
+Veritas is configured for immediate deployment using the included [`render.yaml`](render.yaml) blueprint:
+
+1. Push your repository to GitHub.
+2. Log into the [Render Dashboard](https://dashboard.render.com).
+3. Click **New +** $\rightarrow$ **Blueprint**.
+4. Select your Veritas repository and click **Apply**.
+5. Render builds the React frontend via Vite, sets up the Python 3.11 environment, and deploys the unified production app.
+
+See [DEPLOYMENT_RENDER.md](DEPLOYMENT_RENDER.md) for step-by-step instructions.
 
 ---
 
 ## 💻 Tech Stack
 
-- **Backend**: FastAPI, LangGraph, LangChain Core, Pydantic v2, BeautifulSoup4, DuckDuckGo Search (`ddgs`), Uvicorn.
-- **Frontend**: React 19, TypeScript, Vite, Lucide Icons, Modern Vanilla CSS Design System with `@media print` layout.
-- **Telemetry**: Server-Sent Events (SSE) real-time streaming, SVG Audio Waveform Canvas.
-- **Security & Integrity**: Web Crypto SHA-256 cryptographic truth hashing.
+- **Backend**: Python 3.11, FastAPI, LangGraph, LangChain Core, Pydantic v2, BeautifulSoup4, DuckDuckGo Search (`ddgs`), PyPDF, Uvicorn.
+- **Frontend**: React 19, TypeScript, Vite, Lucide Icons, Modern Vanilla CSS Design System with Glassmorphism, Force-Directed Knowledge Graph Canvas, `@media print` layout.
+- **Real-Time Streaming**: Server-Sent Events (SSE) protocol.
+- **Cryptography**: Web Crypto API SHA-256 truth seal hashing.
+- **Audio Telemetry**: Web Speech API with dynamic animated SVG audio waveform.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is open source and available under the [MIT License](LICENSE).
